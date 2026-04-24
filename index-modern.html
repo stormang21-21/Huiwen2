@@ -758,13 +758,18 @@
             
             // Process message (skip STT, go straight to AI)
             try {
+                console.log('Sending message:', userText);
                 const aiResponse = await getAIResponse(userText, detectLanguage(userText));
+                
+                console.log('AI response:', aiResponse);
                 
                 document.getElementById('typingIndicator').classList.add('hidden');
                 addMessage('bot', aiResponse);
                 
                 // Speak response
+                console.log('Calling speakText with:', aiResponse);
                 await speakText(aiResponse);
+                console.log('speakText completed');
                 
             } catch (err) {
                 console.error('Process error:', err);
@@ -914,7 +919,7 @@
             const systemPrompt = langPrompts[detectedLang] || langPrompts['auto'];
             
             try {
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                const response = await fetch('/v1/chat/completions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

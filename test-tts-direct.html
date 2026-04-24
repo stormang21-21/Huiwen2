@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTS Direct Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; cursor: pointer; }
+        .status { margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .log { background: #000; color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔊 TTS Direct Test</h1>
+    <div class="status" id="status">Click a button to test TTS</div>
+    
+    <h3>Test Voices:</h3>
+    <button onclick="testTTS('indian-male')">🇮🇳 Indian Male</button>
+    <button onclick="testTTS('chinese-male')">🇨🇳 Chinese Male</button>
+    <button onclick="testTTS('singapore-male')">🇸🇬 Singapore Male</button>
+    
+    <h3>Custom Text:</h3>
+    <textarea id="customText" rows="3" style="width:100%; padding:10px; margin:10px 0;">Hello, I am Roboboy. How can I help you today?</textarea>
+    <button onclick="testCustom()">Speak Custom Text</button>
+    
+    <h3>Logs:</h3>
+    <div class="log" id="log"></div>
+    
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        
+        function addLog(msg) {
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `[${time}] ${msg}\n`;
+            log.scrollTop = log.scrollHeight;
+            console.log(msg);
+        }
+        
+        async function testTTS(voice) {
+            status.className = 'status';
+            status.textContent = `Testing ${voice}...`;
+            addLog(`=== Testing ${voice} ===`);
+            
+            try {
+                const text = voice === 'chinese-male' ? '你好，我是 Roboboy' : 
+                             voice === 'singapore-male' ? 'Hello, how are you?' : 
+                             'Hello, I am Roboboy. How can I help you today?';
+                
+                addLog(`Request: ${text}`);
+                addLog(`Voice: ${voice}`);
+                
+                const startTime = Date.now();
+                const response = await fetch('/tts/json', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({ text, voice })
+                });
+                
+                addLog(`Response status: ${response.status} (${Date.now() - startTime}ms)`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    addLog(`Error response: ${errorText}`);
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                addLog(`Audio received: ${data.audio ? data.audio.length : 0} bytes`);
+                addLog(`Format: ${data.format || 'unknown'}`);
+                addLog(`Voice used: ${data.voice || 'unknown'}`);
+                
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                addLog(`Creating Audio object...`);
+                
+                const audio = new Audio(audioUrl);
+                
+                audio.oncanplay = () => {
+                    addLog('✓ Audio can play');
+                };
+                
+                audio.onplay = () => {
+                    addLog('▶️ Audio started playing');
+                    status.className = 'status success';
+                    status.textContent = `✓ Playing ${voice}...`;
+                };
+                
+                audio.onended = () => {
+                    addLog('⏹️ Playback complete');
+                    status.className = 'status success';
+                    status.textContent = `✓ ${voice} completed!`;
+                };
+                
+                audio.onerror = (err) => {
+                    addLog(`✗ Audio error: ${JSON.stringify(err)}`);
+                    status.className = 'status error';
+                    status.textContent = `✗ Playback error`;
+                };
+                
+                addLog('Calling audio.play()...');
+                await audio.play();
+                addLog('✓ play() returned successfully');
+                
+            } catch (err) {
+                addLog(`✗ Error: ${err.message}`);
+                status.className = 'status error';
+                status.textContent = `✗ Error: ${err.message}`;
+                console.error(err);
+            }
+        }
+        
+        function testCustom() {
+            const text = document.getElementById('customText').value;
+            if (!text.trim()) {
+                status.textContent = 'Please enter some text';
+                return;
+            }
+            testTTS('indian-male');
+        }
+        
+        addLog('Page loaded. Ready to test TTS.');
+    </script>
+</body>
+</html>
