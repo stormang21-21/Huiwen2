@@ -901,7 +901,7 @@
 
         // Get AI response
         async function getAIResponse(userText, detectedLang = 'auto') {
-            const apiKey = process.env.OPENAI_API_KEY || 'YOUR_API_KEY_HERE';
+            const apiKey = 'YOUR_API_KEY_HERE';
             
             const langPrompts = {
                 'en': 'You are Roboboy, a friendly Singaporean AI assistant. Respond in English with Singlish style. Use words like "lah", "leh", "meh", "shiok" naturally. Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.',
