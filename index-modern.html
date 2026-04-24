@@ -906,7 +906,7 @@
 
         // Get AI response
         async function getAIResponse(userText, detectedLang = 'auto') {
-            const apiKey = 'YOUR_API_KEY_HERE';
+            const apiKey = ''; // API key handled by server proxy
             
             const langPrompts = {
                 'en': 'You are Roboboy, a friendly Singaporean AI assistant. Respond in English with Singlish style. Use words like "lah", "leh", "meh", "shiok" naturally. Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.',
@@ -923,7 +923,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
+                        'X-API-Key': 'proxy'
                     },
                     body: JSON.stringify({
                         model: 'gpt-3.5-turbo',
