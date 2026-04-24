@@ -933,6 +933,7 @@
                 'zh': '你是一个友好的新加坡AI助手Roboboy。用中文（普通话）回复。保持回复简洁（1-2句话）。要友好、温暖、幽默。',
                 'ms': 'Anda adalah Roboboy, pembantu AI Singapura yang mesra. Balas dalam Bahasa Melayu. Kekalkan jawapan ringkas (1-2 ayat). Jadilah membantu, hangat, dan lucu.',
                 'ta': 'நீங்கள் ரோபோபாய், ஒரு நட்பு சிங்கப்பூர் AI உதவியாளர். தமிழில் பதிலளிக்கவும். பதில்களை சுருக்கமாக வைத்திருங்கள் (1-2 வாக்கியங்கள்). உதவியாக, சூடாக, வேடிக்கையாக இருங்கள்.',
+                'hokkien': 'You are Roboboy, a friendly Singaporean AI assistant. Respond in Hokkien (Min Nan). Use Hokkien words and particles naturally (like "lah", "leh", "meh"). Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.',
                 'auto': 'You are Roboboy, a friendly Singaporean AI assistant. Respond in the SAME LANGUAGE that the user spoke. Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.'
             };
             
@@ -971,6 +972,8 @@
 
         // Detect language from text
         function detectLanguage(text) {
+            // Check for Hokkien first (before Chinese)
+            if (isHokkien(text)) return 'hokkien';
             // Check for Chinese characters
             if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
             // Check for Tamil characters
@@ -979,6 +982,15 @@
             if (/\b(apa|khabar|kabar|selamat|pagi|petang|malam|terima|kasih|sama|ada|dan|yang|untuk|dengan|ini|itu|saya|anda|dia|tidak|adalah|akan|dari|pada|atau|dalam|ke|di|sudah|belum|boleh|harus)\b/i.test(text)) return 'ms';
             // Default to English
             return 'en';
+        }
+        
+        // Detect if text is Hokkien (simplified check)
+        function isHokkien(text) {
+            // Hokkien common words and particles
+            const hokkienWords = /\b(beh|tioh|mmai|goa|lu|si|m|mai|khi|kha|bo|chai|ho|lan|ta|li|bue|tio|beh|tioh|goa|lu|si|m|mai|khi|kha|bo|chai|ho|lan|ta|li|bue|tio)\b/i;
+            // Check for Hokkien-specific characters
+            const hokkienChars = /[々〇〻〆]/;
+            return hokkienWords.test(text) || hokkienChars.test(text);
         }
 
         // Get voice based on language
@@ -990,13 +1002,24 @@
                 default: return TTS_VOICE; // Use default voice
             }
         }
+        
+        // Get voice for Hokkien
+        function getHokkienVoice() {
+            return 'hokkien-male'; // Uses zh-TW-YunJheNeural
+        }
 
         // Speak text
         async function speakText(text) {
             try {
                 // Auto-detect language and select appropriate voice
                 const detectedLang = detectLanguage(text);
-                const voice = getVoiceForLanguage(detectedLang);
+                let voice = getVoiceForLanguage(detectedLang);
+                
+                // Check if it's Hokkien and use Hokkien voice
+                if (detectedLang === 'zh' && isHokkien(text)) {
+                    voice = getHokkienVoice();
+                    console.log('Detected Hokkien text');
+                }
                 
                 console.log('TTS request:', text.substring(0, 50) + '...', 'lang:', detectedLang, 'voice:', voice);
                 

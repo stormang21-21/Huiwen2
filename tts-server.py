@@ -38,6 +38,9 @@ VOICES = {
     # Chinese (Cantonese)
     'cantonese-female': 'zh-HK-HiuGaaiNeural',
     'cantonese-male': 'zh-HK-WanLungNeural',
+    # Chinese (Hokkien/Min Nan)
+    'hokkien-male': 'zh-TW-YunJheNeural',
+    'hokkien-female': 'zh-TW-HsiaoChenNeural',
     # Malay
     'malay-male': 'ms-MY-OsmanNeural',
     # Tamil
