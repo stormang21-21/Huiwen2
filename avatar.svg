@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0D9488;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Glow effect background -->
+  <circle cx="256" cy="256" r="256" fill="url(#glow)"/>
+  
+  <!-- Main teal circle -->
+  <circle cx="256" cy="256" r="200" fill="url(#tealGradient)"/>
+  
+  <!-- White ring -->
+  <circle cx="256" cy="256" r="100" fill="#FFFFFF"/>
+  
+  <!-- Inner teal face circle -->
+  <circle cx="256" cy="256" r="70" fill="#14B8A6"/>
+  
+  <!-- Eyes (white with teal pupils) -->
+  <circle cx="235" cy="245" r="12" fill="#FFFFFF"/>
+  <circle cx="277" cy="245" r="12" fill="#FFFFFF"/>
+  <circle cx="235" cy="245" r="6" fill="#14B8A6"/>
+  <circle cx="277" cy="245" r="6" fill="#14B8A6"/>
+  
+  <!-- Small oval mouth -->
+  <ellipse cx="256" cy="275" rx="8" ry="10" fill="#FFFFFF"/>
+</svg>

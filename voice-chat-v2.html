@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to Roboboy 🇸</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Avatar Styles */
+        .avatar-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        .head {
+            position: absolute;
+            width: 140px;
+            height: 170px;
+            background: linear-gradient(180deg, #e0e0e0 0%, #b0b0b0 100%);
+            border-radius: 70px 70px 55px 55px;
+            left: 30px;
+            top: 15px;
+            box-shadow: inset -7px -7px 14px rgba(0,0,0,0.1), inset 7px 7px 14px rgba(255,255,255,0.3), 0 7px 21px rgba(0,0,0,0.3);
+        }
+        .face {
+            position: absolute;
+            width: 110px;
+            height: 125px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 50px 50px 42px 42px;
+            left: 15px;
+            top: 22px;
+            box-shadow: inset 0 0 14px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .eyes {
+            position: absolute;
+            width: 85px;
+            height: 28px;
+            top: 28px;
+            left: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .eye {
+            width: 35px;
+            height: 25px;
+            background: #00ffff;
+            border-radius: 50%;
+            box-shadow: 0 0 14px #00ffff, 0 0 28px #00ffff;
+            animation: glow 2s ease-in-out infinite;
+            transition: all 0.1s;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 14px #00ffff, 0 0 28px #00ffff; }
+            50% { box-shadow: 0 0 21px #00ffff, 0 0 42px #00ffff; }
+        }
+        .eye.blink { height: 2px; border-radius: 5px; }
+        .mouth {
+            position: absolute;
+            width: 55px;
+            height: 14px;
+            background: #00ffff;
+            border-radius: 7px;
+            left: 28px;
+            top: 77px;
+            box-shadow: 0 0 14px #00ffff;
+            transition: all 0.1s;
+        }
+        .mouth.talking { animation: talk 0.15s ease-in-out infinite; }
+        @keyframes talk {
+            0%, 100% { height: 7px; border-radius: 4px; }
+            50% { height: 21px; border-radius: 11px; }
+        }
+        .antenna {
+            position: absolute;
+            width: 7px;
+            height: 28px;
+            background: linear-gradient(180deg, #b0b0b0 0%, #808080 100%);
+            left: 67px;
+            top: -14px;
+        }
+        .antenna::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #ff4757;
+            border-radius: 50%;
+            top: -18px;
+            left: -4px;
+            box-shadow: 0 0 14px #ff4757;
+            animation: blink-light 1s ease-in-out infinite;
+        }
+        @keyframes blink-light {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+        
+        .mic-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
+            border: none;
+            font-size: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .mic-button:active { transform: scale(0.95); }
+        .mic-button.recording {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2F27 100%);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        .status { font-size: 16px; color: #333; margin-bottom: 15px; font-weight: 500; }
+        
+        .transcript, .response {
+            background: #f5f5f7;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            min-height: 50px;
+            text-align: left;
+            display: none;
+            font-size: 14px;
+        }
+        .transcript.show, .response.show { display: block; animation: fadeIn 0.3s ease; }
+        .response { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        
+        .audio-player { width: 100%; margin-top: 10px; display: none; }
+        .audio-player.show { display: block; }
+        
+        .error {
+            color: #FF3B30;
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #FFF5F5;
+            border-radius: 8px;
+            display: none;
+        }
+        .error.show { display: block; }
+        
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 11px;
+            text-align: left;
+            display: none;
+        }
+        .debug-info.show { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Avatar -->
+        <div class="avatar-container">
+            <div class="head">
+                <div class="antenna"></div>
+                <div class="face">
+                    <div class="eyes">
+                        <div class="eye left" id="eyeLeft"></div>
+                        <div class="eye right" id="eyeRight"></div>
+                    </div>
+                    <div class="mouth" id="avatarMouth"></div>
+                </div>
+            </div>
+        </div>
+        
+        <h1>Talk to Roboboy 🇸🇬</h1>
+        <p class="subtitle">Your Singaporean Digital Friend</p>
+
+        <button class="mic-button" id="micBtn">🎤</button>
+        <p class="status" id="status">Tap microphone to speak</p>
+
+        <div class="transcript" id="transcriptBox">
+            <strong>You:</strong> <span id="transcriptText"></span>
+        </div>
+
+        <div class="response" id="responseBox">
+            <strong>Roboboy:</strong> <span id="responseText"></span>
+            <audio class="audio-player" id="audioPlayer" controls></audio>
+        </div>
+
+        <p class="error" id="errorMsg"></p>
+        
+        <div class="debug-info" id="debugInfo"></div>
+    </div>
+
+    <script>
+        // Show debug info
+        const debugInfo = document.getElementById('debugInfo');
+        const debugText = `
+            <strong>Debug Info:</strong><br>
+            Browser: ${navigator.userAgent}<br>
+            Protocol: ${window.location.protocol}<br>
+            Host: ${window.location.host}<br>
+            MediaDevices: ${!!navigator.mediaDevices}<br>
+            getUserMedia: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)}<br>
+            MediaRecorder: ${typeof MediaRecorder !== 'undefined'}<br>
+        `;
+        debugInfo.innerHTML = debugText;
+        debugInfo.classList.add('show');
+
+        // Config - Use ngrok URL for both UI and Gateway
+        const NGROK_URL = window.location.origin; // Use the same origin (ngrok HTTPS URL)
+        const OPENCLAW_GATEWAY = NGROK_URL; // Gateway via ngrok too
+        const TTS_SERVER = window.location.origin; // TTS server on same origin
+        const TELEGRAM_CHAT_ID = 'telegram:407245720';
+
+        console.log('Using ngrok URL:', NGROK_URL);
+        console.log('TTS Server:', TTS_SERVER);
+
+        // Elements
+        const micBtn = document.getElementById('micBtn');
+        const status = document.getElementById('status');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const transcriptText = document.getElementById('transcriptText');
+        const responseBox = document.getElementById('responseBox');
+        const responseText = document.getElementById('responseText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // State
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isProcessing = false;
+
+        console.log('🇸🇬 Roboboy Voice Chat v2 loaded!');
+        console.log('Gateway:', OPENCLAW_GATEWAY);
+        
+        // Avatar blinking
+        const eyeLeft = document.getElementById('eyeLeft');
+        const eyeRight = document.getElementById('eyeRight');
+        const avatarMouth = document.getElementById('avatarMouth');
+        
+        function blink() {
+            eyeLeft.classList.add('blink');
+            eyeRight.classList.add('blink');
+            setTimeout(() => {
+                eyeLeft.classList.remove('blink');
+                eyeRight.classList.remove('blink');
+            }, 200);
+        }
+        
+        function startBlinking() {
+            function scheduleBlink() {
+                const delay = 3000 + Math.random() * 3000;
+                setTimeout(() => {
+                    blink();
+                    scheduleBlink();
+                }, delay);
+            }
+            scheduleBlink();
+        }
+        startBlinking();
+        
+        function startTalking() {
+            avatarMouth.classList.add('talking');
+        }
+        
+        function stopTalking() {
+            avatarMouth.classList.remove('talking');
+        }
+
+        // Check if browser supports recording
+        function canRecord() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return false;
+            }
+            if (typeof MediaRecorder === 'undefined') {
+                return false;
+            }
+            return true;
+        }
+
+        const browserSupported = canRecord();
+        console.log('Browser supported:', browserSupported);
+
+        if (!browserSupported) {
+            showError('Browser does not support audio recording. Please use Chrome on Android.');
+            micBtn.disabled = true;
+            micBtn.style.opacity = '0.5';
+        }
+
+        // Button click
+        micBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Button clicked! isRecording:', isRecording, 'isProcessing:', isProcessing);
+            alert('Button clicked! isRecording=' + isRecording);
+
+            if (!browserSupported) {
+                showError('Browser not supported');
+                return;
+            }
+
+            if (isProcessing) {
+                console.log('Already processing');
+                return;
+            }
+
+            if (isRecording) {
+                console.log('Stopping recording');
+                stopRecording();
+            } else {
+                console.log('Starting recording');
+                await startRecording();
+            }
+        });
+
+        // Start recording
+        async function startRecording() {
+            try {
+                console.log('Requesting microphone...');
+                status.textContent = 'Requesting permission...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone granted!');
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    console.log('Data:', event.data.size);
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    console.log('Recording stopped');
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/ogg;codecs=opus' });
+                    await sendAudio(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '⏹️';
+                status.textContent = 'Recording... Tap to stop';
+                hideError();
+                hideResponse();
+
+            } catch (err) {
+                console.error('Mic error:', err);
+                showError('Microphone error: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                if (mediaRecorder.stream) {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+            }
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '🎤';
+            status.textContent = 'Processing...';
+            isProcessing = true;
+        }
+
+        // Send audio
+        async function sendAudio(audioBlob) {
+            try {
+                console.log('Sending audio...');
+                
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'voice.ogg');
+                formData.append('chatId', TELEGRAM_CHAT_ID);
+
+                const uploadResponse = await fetch(`${OPENCLAW_GATEWAY}/api/media/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Upload status:', uploadResponse.status);
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Upload failed: ' + uploadResponse.status);
+                }
+
+                const uploadData = await uploadResponse.json();
+                const mediaPath = uploadData.path || uploadData.mediaPath;
+                console.log('Media path:', mediaPath);
+
+                if (!mediaPath) {
+                    throw new Error('No media path');
+                }
+
+                const messageResponse = await fetch(`${OPENCLAW_GATEWAY}/api/message/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        channel: 'telegram',
+                        target: TELEGRAM_CHAT_ID,
+                        message: '[Voice]',
+                        media: mediaPath
+                    })
+                });
+
+                console.log('Message status:', messageResponse.status);
+
+                if (!messageResponse.ok) {
+                    throw new Error('Message failed: ' + messageResponse.status);
+                }
+
+                status.textContent = 'Waiting for reply...';
+                await pollForReply();
+
+            } catch (err) {
+                console.error('Send error:', err);
+                showError('Send failed: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+                isProcessing = false;
+            }
+        }
+
+        // Poll for reply
+        async function pollForReply() {
+            let attempts = 0;
+            const maxAttempts = 30;
+
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                console.log('Polling...', attempts);
+
+                try {
+                    const response = await fetch(`${OPENCLAW_GATEWAY}/api/sessions/history?limit=5`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.messages && data.messages.length > 0) {
+                            const assistantMessages = data.messages.filter(m => m.from === 'assistant' || m.role === 'assistant');
+                            
+                            if (assistantMessages.length > 0) {
+                                const lastMessage = assistantMessages[assistantMessages.length - 1];
+                                
+                                if (lastMessage.media || lastMessage.text) {
+                                    clearInterval(pollInterval);
+                                    displayReply(lastMessage);
+                                    status.textContent = 'Tap microphone to speak';
+                                    isProcessing = false;
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Poll error:', err);
+                }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    showError('No reply received');
+                    status.textContent = 'Tap microphone to speak';
+                    isProcessing = false;
+                }
+            }, 1000);
+        }
+
+        // Display reply
+        async function displayReply(message) {
+            console.log('Reply:', message);
+            
+            if (message.transcript) {
+                transcriptText.textContent = message.transcript;
+                transcriptBox.classList.add('show');
+            }
+
+            if (message.text) {
+                responseText.textContent = message.text;
+                responseBox.classList.add('show');
+                
+                // Generate TTS for the response text
+                await generateTTS(message.text);
+            }
+
+            if (message.media) {
+                audioPlayer.src = message.media;
+                audioPlayer.classList.add('show');
+                audioPlayer.play().catch(err => {
+                    console.error('Play error:', err);
+                });
+            }
+        }
+        
+        // Generate TTS from text
+        async function generateTTS(text) {
+            try {
+                console.log('Generating TTS for:', text.substring(0, 50) + '...');
+                
+                const response = await fetch(`${TTS_SERVER}/tts/json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: 'singapore-male'  // Singapore English (male - Wayne)
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('TTS failed: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                // Create audio URL from base64
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                audioPlayer.src = audioUrl;
+                audioPlayer.classList.add('show');
+                
+                // Start talking animation
+                startTalking();
+                
+                audioPlayer.play().catch(err => {
+                    console.error('Play error:', err);
+                });
+                
+                // Stop talking when audio ends
+                audioPlayer.onended = () => {
+                    stopTalking();
+                };
+                
+            } catch (err) {
+                console.error('TTS error:', err);
+                // TTS is optional - don't show error to user
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+        }
+
+        // Hide error
+        function hideError() {
+            errorMsg.classList.remove('show');
+        }
+
+        // Hide response
+        function hideResponse() {
+            responseBox.classList.remove('show');
+            transcriptBox.classList.remove('show');
+            audioPlayer.classList.remove('show');
+        }
+
+        console.log('Ready! Click the microphone!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTS Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .status { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>TTS Test Page</h1>
+    <div class="status" id="status">Ready to test...</div>
+    
+    <h3>Test Chinese TTS:</h3>
+    <button onclick="testChinese()">Test Chinese Male</button>
+    <button onclick="testChineseFemale()">Test Chinese Female</button>
+    
+    <h3>Test English TTS:</h3>
+    <button onclick="testEnglish()">Test Indian Male</button>
+    <button onclick="testSingapore()">Test Singapore Male</button>
+    
+    <script>
+        const status = document.getElementById('status');
+        
+        async function testTTS(text, voice, label) {
+            status.className = 'status';
+            status.textContent = `Testing ${label}...`;
+            
+            try {
+                const response = await fetch('/tts/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                
+                const audio = new Audio(audioUrl);
+                audio.play();
+                
+                status.className = 'status success';
+                status.textContent = `✓ ${label} working! Audio size: ${data.audio.length} bytes`;
+                
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = `✗ ${label} failed: ${err.message}`;
+                console.error(err);
+            }
+        }
+        
+        function testChinese() {
+            testTTS('你好，我是Roboboy。今天有什么可以帮你的？', 'chinese-male', 'Chinese Male');
+        }
+        
+        function testChineseFemale() {
+            testTTS('你好，我是Roboboy。今天有什么可以帮你的？', 'chinese-female', 'Chinese Female');
+        }
+        
+        function testEnglish() {
+            testTTS('Hello, I am Roboboy. How can I help you today?', 'indian-male', 'Indian Male');
+        }
+        
+        function testSingapore() {
+            testTTS('Hello, I am Roboboy. How can I help you today?', 'singapore-male', 'Singapore Male');
+        }
+    </script>
+</body>
+</html>

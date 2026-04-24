@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to Roboboy 🇸🇬</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Avatar Styles */
+        .avatar-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        .head {
+            position: absolute;
+            width: 140px;
+            height: 170px;
+            background: linear-gradient(180deg, #e0e0e0 0%, #b0b0b0 100%);
+            border-radius: 70px 70px 55px 55px;
+            left: 30px;
+            top: 15px;
+            box-shadow: inset -7px -7px 14px rgba(0,0,0,0.1), inset 7px 7px 14px rgba(255,255,255,0.3), 0 7px 21px rgba(0,0,0,0.3);
+        }
+        .face {
+            position: absolute;
+            width: 110px;
+            height: 125px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 50px 50px 42px 42px;
+            left: 15px;
+            top: 22px;
+            box-shadow: inset 0 0 14px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .eyes {
+            position: absolute;
+            width: 85px;
+            height: 28px;
+            top: 28px;
+            left: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .eye {
+            width: 35px;
+            height: 25px;
+            background: #00ffff;
+            border-radius: 50%;
+            box-shadow: 0 0 14px #00ffff, 0 0 28px #00ffff;
+            animation: glow 2s ease-in-out infinite;
+            transition: all 0.1s;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 14px #00ffff, 0 0 28px #00ffff; }
+            50% { box-shadow: 0 0 21px #00ffff, 0 0 42px #00ffff; }
+        }
+        .eye.blink { height: 2px; border-radius: 5px; }
+        .mouth {
+            position: absolute;
+            width: 55px;
+            height: 14px;
+            background: #00ffff;
+            border-radius: 7px;
+            left: 28px;
+            top: 77px;
+            box-shadow: 0 0 14px #00ffff;
+            transition: all 0.1s;
+        }
+        .mouth.talking { animation: talk 0.15s ease-in-out infinite; }
+        @keyframes talk {
+            0%, 100% { height: 7px; border-radius: 4px; }
+            50% { height: 21px; border-radius: 11px; }
+        }
+        .antenna {
+            position: absolute;
+            width: 7px;
+            height: 28px;
+            background: linear-gradient(180deg, #b0b0b0 0%, #808080 100%);
+            left: 67px;
+            top: -14px;
+        }
+        .antenna::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #ff4757;
+            border-radius: 50%;
+            top: -18px;
+            left: -4px;
+            box-shadow: 0 0 14px #ff4757;
+            animation: blink-light 1s ease-in-out infinite;
+        }
+        @keyframes blink-light {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+        
+        .mic-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
+            border: none;
+            font-size: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .mic-button:active { transform: scale(0.95); }
+        .mic-button.recording {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2F27 100%);
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        .status { font-size: 16px; color: #333; margin-bottom: 15px; font-weight: 500; }
+        
+        .transcript, .response {
+            background: #f5f5f7;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            min-height: 50px;
+            text-align: left;
+            display: none;
+            font-size: 14px;
+        }
+        .transcript.show, .response.show { display: block; animation: fadeIn 0.3s ease; }
+        .response { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        
+        .audio-player { width: 100%; margin-top: 10px; display: none; }
+        .audio-player.show { display: block; }
+        
+        .error {
+            color: #FF3B30;
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #FFF5F5;
+            border-radius: 8px;
+            display: none;
+        }
+        .error.show { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Avatar -->
+        <div class="avatar-container">
+            <div class="head">
+                <div class="antenna"></div>
+                <div class="face">
+                    <div class="eyes">
+                        <div class="eye left" id="eyeLeft"></div>
+                        <div class="eye right" id="eyeRight"></div>
+                    </div>
+                    <div class="mouth" id="avatarMouth"></div>
+                </div>
+            </div>
+        </div>
+        
+        <h1>Talk to Roboboy 🇸🇬</h1>
+        <p class="subtitle">Your Singaporean Digital Friend</p>
+        
+        <!-- Voice Selector -->
+        <div style="margin-bottom: 15px;">
+            <select id="voiceSelector" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; background: white;">
+                <option value="singapore-male">🇸🇬 Wayne (Singapore Male)</option>
+                <option value="singapore">🇸🇬 Luna (Singapore Female)</option>
+                <option value="chinese-male">🇨🇳 云希 (Chinese Male)</option>
+                <option value="chinese-female">🇨🇳 晓晓 (Chinese Female)</option>
+                <option value="cantonese-male">🇭🇰 云龙 (Cantonese Male)</option>
+                <option value="cantonese-female">🇭🇰 海嘉 (Cantonese Female)</option>
+                <option value="malay-male">🇲🇾 奥斯曼 (Malay Male)</option>
+                <option value="tamil-male">🇮 தமிழ் வள்ளுவர் (Tamil Male)</option>
+                <option value="tamil-female">🇮 தமிழ் பல்லவி (Tamil Female)</option>
+                <option value="australia-male">🇦🇺 William (Australian Male)</option>
+                <option value="india-male">🇮 Prabhat (Indian Male)</option>
+                <option value="uk">🇬🇧 Sonia (UK Female)</option>
+                <option value="us">🇺🇸 Jenny (US Female)</option>
+            </select>
+        </div>
+
+        <button class="mic-button" id="micBtn">🎤</button>
+        <p class="status" id="status">Tap microphone to speak</p>
+
+        <div class="transcript" id="transcriptBox">
+            <strong>You:</strong> <span id="transcriptText"></span>
+        </div>
+
+        <div class="response" id="responseBox">
+            <strong>Roboboy:</strong> <span id="responseText"></span>
+            <audio class="audio-player" id="audioPlayer" controls></audio>
+        </div>
+
+        <p class="error" id="errorMsg"></p>
+    </div>
+
+    <script>
+        // Config
+        const SERVER_URL = window.location.origin;
+        
+        // Default voice (can be changed via dropdown or auto-detected)
+        let TTS_VOICE = 'singapore-male';
+        
+        // Language to voice mapping
+        const LANGUAGE_VOICES = {
+            'en': 'singapore-male',      // English → Singapore Male
+            'zh-cn': 'chinese-male',     // Chinese (Mandarin) → Chinese Male
+            'zh': 'chinese-male',        // Chinese (general) → Chinese Male
+            'zh-hk': 'cantonese-male',   // Chinese (Cantonese) → Cantonese Male
+            'ms': 'malay-male',          // Malay → Malay Male
+            'id': 'malay-male',          // Indonesian → Malay Male (close enough)
+            'ta': 'tamil-male',          // Tamil → Tamil Male
+            'hi': 'india-male',          // Hindi → Indian Male
+            'auto': 'singapore-male'     // Auto → Default to Singapore Male
+        };
+        
+        // Elements
+        const micBtn = document.getElementById('micBtn');
+        const status = document.getElementById('status');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const transcriptText = document.getElementById('transcriptText');
+        const responseBox = document.getElementById('responseBox');
+        const responseText = document.getElementById('responseText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const errorMsg = document.getElementById('errorMsg');
+        const voiceSelector = document.getElementById('voiceSelector');
+        
+        // Voice selector event listener
+        voiceSelector.addEventListener('change', (e) => {
+            TTS_VOICE = e.target.value;
+            console.log('Voice changed to:', TTS_VOICE);
+        });
+        
+        // Avatar elements
+        const eyeLeft = document.getElementById('eyeLeft');
+        const eyeRight = document.getElementById('eyeRight');
+        const avatarMouth = document.getElementById('avatarMouth');
+
+        // State
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isProcessing = false;
+
+        console.log('🇸🇬 Roboboy Voice Chat v3 loaded!');
+        console.log('Server:', SERVER_URL);
+        
+        // Avatar blinking
+        function blink() {
+            eyeLeft.classList.add('blink');
+            eyeRight.classList.add('blink');
+            setTimeout(() => {
+                eyeLeft.classList.remove('blink');
+                eyeRight.classList.remove('blink');
+            }, 200);
+        }
+        
+        function startBlinking() {
+            function scheduleBlink() {
+                const delay = 3000 + Math.random() * 3000;
+                setTimeout(() => {
+                    blink();
+                    scheduleBlink();
+                }, delay);
+            }
+            scheduleBlink();
+        }
+        startBlinking();
+        
+        function startTalking() {
+            avatarMouth.classList.add('talking');
+        }
+        
+        function stopTalking() {
+            avatarMouth.classList.remove('talking');
+        }
+
+        // Check if browser supports recording
+        function canRecord() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return false;
+            }
+            if (typeof MediaRecorder === 'undefined') {
+                return false;
+            }
+            return true;
+        }
+
+        const browserSupported = canRecord();
+        console.log('Browser supported:', browserSupported);
+
+        if (!browserSupported) {
+            showError('Browser does not support audio recording. Please use Chrome on Android.');
+            micBtn.disabled = true;
+            micBtn.style.opacity = '0.5';
+        }
+
+        // Button click
+        micBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Button clicked! isRecording:', isRecording, 'isProcessing:', isProcessing);
+
+            if (!browserSupported) {
+                showError('Browser not supported');
+                return;
+            }
+
+            if (isProcessing) {
+                console.log('Already processing');
+                return;
+            }
+
+            if (isRecording) {
+                console.log('Stopping recording');
+                stopRecording();
+            } else {
+                console.log('Starting recording');
+                await startRecording();
+            }
+        });
+
+        // Start recording
+        async function startRecording() {
+            try {
+                console.log('Requesting microphone...');
+                status.textContent = 'Requesting permission...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone granted!');
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    console.log('Data:', event.data.size);
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    console.log('Recording stopped');
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/ogg;codecs=opus' });
+                    await processVoice(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '⏹️';
+                status.textContent = 'Recording... Tap to stop';
+                hideError();
+                hideResponse();
+
+            } catch (err) {
+                console.error('Mic error:', err);
+                showError('Microphone error: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                if (mediaRecorder.stream) {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+            }
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '🎤';
+            status.textContent = 'Processing...';
+            isProcessing = true;
+        }
+
+        // Main voice processing flow: STT → AI → TTS
+        async function processVoice(audioBlob) {
+            try {
+                // Step 1: Speech-to-Text
+                status.textContent = '🎤 Transcribing speech...';
+                const sttResult = await transcribeAudio(audioBlob);
+                const userText = sttResult.text;
+                const detectedLang = sttResult.language;
+                console.log('User said:', userText, '(Language:', detectedLang + ')');
+                
+                if (!userText) {
+                    throw new Error('No speech detected');
+                }
+                
+                // Show user's text
+                transcriptText.textContent = userText;
+                transcriptBox.classList.add('show');
+                
+                // Step 2: Get AI response (in same language)
+                status.textContent = '🤖 Thinking...';
+                const aiResponse = await getAIResponse(userText, detectedLang);
+                console.log('AI response:', aiResponse);
+                
+                // Auto-select voice based on detected language
+                const autoVoice = LANGUAGE_VOICES[detectedLang] || LANGUAGE_VOICES['auto'];
+                if (autoVoice !== TTS_VOICE) {
+                    TTS_VOICE = autoVoice;
+                    // Update voice selector to match
+                    voiceSelector.value = TTS_VOICE;
+                    console.log('Auto-selected voice:', TTS_VOICE);
+                }
+                
+                // Show AI response
+                responseText.textContent = aiResponse;
+                responseBox.classList.add('show');
+                
+                // Step 3: Text-to-Speech
+                status.textContent = '🔊 Speaking...';
+                await speakText(aiResponse);
+                
+                status.textContent = 'Tap microphone to speak';
+                isProcessing = false;
+                
+            } catch (err) {
+                console.error('Process error:', err);
+                showError('Error: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+                isProcessing = false;
+            }
+        }
+
+        // Step 1: Transcribe audio using STT server
+        async function transcribeAudio(audioBlob) {
+            console.log('Audio blob type:', audioBlob.type, 'size:', audioBlob.size);
+            
+            const formData = new FormData();
+            // Use the correct extension based on blob type
+            let ext = 'webm';
+            if (audioBlob.type.includes('ogg')) ext = 'ogg';
+            else if (audioBlob.type.includes('mp4')) ext = 'mp4';
+            else if (audioBlob.type.includes('wav')) ext = 'wav';
+            
+            formData.append('file', audioBlob, `voice.${ext}`);
+            
+            const response = await fetch(`${SERVER_URL}/transcribe`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('STT failed: ' + response.status);
+            }
+            
+            const data = await response.json();
+            console.log('STT Result:', data);
+            
+            // Return both text and detected language
+            return {
+                text: data.text || '',
+                language: data.language || 'auto'
+            };
+        }
+
+        // Step 2: Get AI response (using OpenAI API)
+        async function getAIResponse(userText, detectedLang = 'auto') {
+            // Use OpenAI API directly
+            const apiKey = process.env.OPENAI_API_KEY || 'YOUR_API_KEY_HERE';
+            
+            // Language-specific system prompts
+            const langPrompts = {
+                'en': 'You are Roboboy, a friendly Singaporean AI assistant. Respond in English with Singlish style. Use words like "lah", "leh", "meh", "shiok" naturally. Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.',
+                'zh': '你是一个友好的新加坡AI助手Roboboy。用中文（普通话）回复。保持回复简洁（1-2句话）。要友好、温暖、幽默。',
+                'ms': 'Anda adalah Roboboy, pembantu AI Singapura yang mesra. Balas dalam Bahasa Melayu. Kekalkan jawapan ringkas (1-2 ayat). Jadilah membantu, hangat, dan lucu.',
+                'ta': 'நீங்கள் ரோபோபாய், ஒரு நட்பு சிங்கப்பூர் AI உதவியாளர். தமிழில் பதிலளிக்கவும். பதில்களை சுருக்கமாக வைத்திருங்கள் (1-2 வாக்கியங்கள்). உதவியாக, சூடாக, வேடிக்கையாக இருங்கள்.',
+                'hi': 'आप रोबोबॉय हैं, एक दोस्ताना सिंगापुरी AI सहायक। हिंदी में जवाब दें। संक्षिप्त रखें (1-2 वाक्य)। मददगार, गर्मजोशी और हास्यप्रद बनें।',
+                'auto': 'You are Roboboy, a friendly Singaporean AI assistant. IMPORTANT: Respond in the SAME LANGUAGE that the user spoke. If they speak English, use Singlish style with words like "lah", "leh", "meh". If they speak Chinese, respond in Chinese. If Malay, respond in Malay. Match their language! Keep responses concise (1-2 sentences). Be helpful, warm, and humorous.'
+            };
+            
+            const systemPrompt = langPrompts[detectedLang] || langPrompts['auto'];
+            
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: systemPrompt
+                            },
+                            {
+                                role: 'user',
+                                content: userText
+                            }
+                        ],
+                        max_tokens: 150,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('AI API failed: ' + response.status);
+                }
+                
+                const data = await response.json();
+                return data.choices[0].message.content.trim();
+                
+            } catch (err) {
+                console.error('AI error:', err);
+                // Fallback response if AI fails
+                return "Sorry, I'm having trouble thinking right now. Try again later lah! 🤖";
+            }
+        }
+
+        // Step 3: Generate speech using TTS server
+        async function speakText(text) {
+            try {
+                const response = await fetch(`${SERVER_URL}/tts/json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: TTS_VOICE  // Configurable voice
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('TTS failed: ' + response.status);
+                }
+                
+                const data = await response.json();
+                
+                // Create audio URL from base64
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                audioPlayer.src = audioUrl;
+                audioPlayer.classList.add('show');
+                
+                // Start talking animation
+                startTalking();
+                
+                audioPlayer.play().catch(err => {
+                    console.error('Play error:', err);
+                });
+                
+                // Stop talking when audio ends
+                audioPlayer.onended = () => {
+                    stopTalking();
+                };
+                
+            } catch (err) {
+                console.error('TTS error:', err);
+                // TTS is optional - don't show error to user
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+        }
+
+        // Hide error
+        function hideError() {
+            errorMsg.classList.remove('show');
+        }
+
+        // Hide response
+        function hideResponse() {
+            responseBox.classList.remove('show');
+            transcriptBox.classList.remove('show');
+            audioPlayer.classList.remove('show');
+        }
+
+        console.log('Ready! Click the microphone!');
+    </script>
+</body>
+</html>

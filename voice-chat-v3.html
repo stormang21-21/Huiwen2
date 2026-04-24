@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to Roboboy 🇸🇬</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+        
+        .mic-button {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
+            border: none;
+            font-size: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .mic-button:active { transform: scale(0.95); }
+        .mic-button.recording {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2F27 100%);
+            animation: pulse 1s infinite;
+        }
+        .mic-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        .status { font-size: 14px; color: #333; margin-bottom: 15px; font-weight: 500; }
+        
+        .chat-box {
+            background: #f5f5f7;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .chat-box.show { display: block; }
+        
+        .message {
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 18px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .user-message {
+            background: #007AFF;
+            color: white;
+            text-align: right;
+            margin-left: auto;
+        }
+        .assistant-message {
+            background: #e5e5ea;
+            color: #333;
+            text-align: left;
+            margin-right: auto;
+        }
+        
+        .audio-player {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+        .audio-player.show { display: block; }
+        
+        .error {
+            color: #FF3B30;
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #FFF5F5;
+            border-radius: 8px;
+            display: none;
+        }
+        .error.show { display: block; }
+        
+        .config-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f7;
+            border-radius: 12px;
+            font-size: 12px;
+            text-align: left;
+        }
+        .config-section input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .config-section button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Talk to Roboboy 🇸🇬</h1>
+        <p class="subtitle">Your Singaporean Digital Friend</p>
+
+        <button class="mic-button" id="micBtn">🎤</button>
+        <p class="status" id="status">Tap microphone to speak</p>
+
+        <div class="chat-box" id="chatBox"></div>
+        <audio class="audio-player" id="audioPlayer" controls></audio>
+
+        <p class="error" id="errorMsg"></p>
+
+        <div class="config-section">
+            <strong>Configuration:</strong><br>
+            <label>Voice Language:</label>
+            <select id="voiceLang" style="width:100%;padding:8px;margin:5px 0;border:1px solid #ddd;border-radius:6px;">
+                <option value="ta-IN">தமிழ் (Tamil)</option>
+                <option value="en-SG">English (Singapore)</option>
+                <option value="en-US">English (US)</option>
+                <option value="zh-CN">中文 (Chinese)</option>
+            </select>
+            <label>Gateway URL:</label>
+            <input type="text" id="gatewayUrl" value="https://tricksy-semiempirically-myla.ngrok-free.dev">
+            <label>Gateway Token:</label>
+            <input type="text" id="gatewayToken" value="514b165e6e409cad2c26a5d35185b4224232bd5f87e1f882">
+            <label>OpenAI API Key (for transcription):</label>
+            <input type="text" id="openaiKey" value="YOUR_OPENAI_API_KEY">
+            <button id="saveConfig">Save</button>
+        </div>
+    </div>
+
+    <script>
+        // Config
+        let GATEWAY_URL = document.getElementById('gatewayUrl').value;
+        let GATEWAY_TOKEN = document.getElementById('gatewayToken').value;
+        let OPENAI_KEY = document.getElementById('openaiKey').value;
+        let VOICE_LANG = 'ta-IN'; // Default to Tamil
+
+        // Elements
+        const micBtn = document.getElementById('micBtn');
+        const status = document.getElementById('status');
+        const chatBox = document.getElementById('chatBox');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // State
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isProcessing = false;
+
+        console.log('🇸🇬 Roboboy Voice Chat v3 loaded!');
+        console.log('Gateway:', GATEWAY_URL);
+
+        // Save config
+        document.getElementById('saveConfig').addEventListener('click', () => {
+            GATEWAY_URL = document.getElementById('gatewayUrl').value;
+            GATEWAY_TOKEN = document.getElementById('gatewayToken').value;
+            OPENAI_KEY = document.getElementById('openaiKey').value;
+            VOICE_LANG = document.getElementById('voiceLang').value;
+            console.log('Config saved! Voice:', VOICE_LANG);
+            hideError();
+        });
+        
+        // Load voices when page loads
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                console.log('Voices loaded:', window.speechSynthesis.getVoices().length);
+            };
+        }
+
+        // Check browser support
+        function canRecord() {
+            return navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined';
+        }
+
+        if (!canRecord()) {
+            showError('Browser does not support audio recording');
+            micBtn.classList.add('disabled');
+        }
+
+        // Button click
+        micBtn.addEventListener('click', async () => {
+            if (isProcessing || !canRecord()) return;
+
+            if (isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        });
+
+        // Start recording
+        async function startRecording() {
+            try {
+                status.textContent = 'Requesting microphone...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone granted!');
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    audioChunks.push(e.data);
+                    console.log('Audio chunk:', e.data.size);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    console.log('Recording stopped, size:', audioBlob.size);
+                    await processAudio(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '⏹️';
+                status.textContent = 'Recording... Tap to stop';
+                hideError();
+
+            } catch (err) {
+                console.error('Mic error:', err);
+                showError('Microphone error: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            }
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '🎤';
+            status.textContent = 'Processing...';
+            isProcessing = true;
+        }
+
+        // Process audio
+        async function processAudio(audioBlob) {
+            try {
+                // Step 1: Transcribe with OpenAI Whisper
+                status.textContent = 'Transcribing...';
+                console.log('Transcribing audio...');
+                
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'audio.webm');
+                formData.append('model', 'whisper-1');
+
+                const transcribeResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${OPENAI_KEY}` },
+                    body: formData
+                });
+
+                if (!transcribeResponse.ok) {
+                    throw new Error('Transcription failed: ' + transcribeResponse.status);
+                }
+
+                const transcribeData = await transcribeResponse.json();
+                const userText = transcribeData.text;
+                console.log('Transcribed:', userText);
+
+                // Show user message
+                addMessage(userText, 'user');
+                chatBox.classList.add('show');
+
+                // Step 2: Send to OpenClaw via OpenAI-compatible API
+                status.textContent = 'Thinking...';
+                console.log('Sending to OpenClaw...');
+
+                const chatResponse = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GATEWAY_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'openclaw/default',
+                        messages: [{ role: 'user', content: userText }],
+                        stream: false
+                    })
+                });
+
+                if (!chatResponse.ok) {
+                    const errorText = await chatResponse.text();
+                    throw new Error('Chat failed: ' + chatResponse.status + ' - ' + errorText);
+                }
+
+                const chatData = await chatResponse.json();
+                const assistantText = chatData.choices[0].message.content;
+                console.log('Response:', assistantText);
+
+                // Show assistant message
+                addMessage(assistantText, 'assistant');
+
+                // Step 3: Generate TTS using Web Speech API (browser built-in)
+                status.textContent = 'Speaking...';
+                await speakText(assistantText);
+                
+                status.textContent = 'Ready! Tap to speak';
+                isProcessing = false;
+
+            } catch (err) {
+                console.error('Process error:', err);
+                showError('Error: ' + err.message);
+                status.textContent = 'Tap microphone to speak';
+                isProcessing = false;
+            }
+        }
+
+        // Speak text using Microsoft Edge TTS API (supports Tamil!)
+        async function speakText(text) {
+            try {
+                // Use Microsoft Edge TTS via a proxy (to avoid CORS)
+                // For now, use browser TTS with Tamil voice selection
+                return new Promise((resolve) => {
+                    if (!window.speechSynthesis) {
+                        console.log('Speech synthesis not supported');
+                        resolve();
+                        return;
+                    }
+                    
+                    const cleanText = text.substring(0, 500);
+                    const utterance = new SpeechSynthesisUtterance(cleanText);
+                    
+                    // Load voices and find selected language
+                    const voices = window.speechSynthesis.getVoices();
+                    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+                    
+                    // Find voice for selected language
+                    let selectedVoice = voices.find(v => v.lang === VOICE_LANG);
+                    
+                    if (!selectedVoice) {
+                        // Fallback: try partial match
+                        const langPrefix = VOICE_LANG.split('-')[0];
+                        selectedVoice = voices.find(v => v.lang.startsWith(langPrefix));
+                    }
+                    
+                    if (selectedVoice) {
+                        console.log('Using voice:', selectedVoice.name, selectedVoice.lang);
+                        utterance.voice = selectedVoice;
+                        utterance.lang = selectedVoice.lang;
+                    } else {
+                        console.log('No voice found for', VOICE_LANG, 'using default');
+                    }
+                    
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+                    
+                    utterance.onend = () => resolve();
+                    utterance.onerror = (e) => {
+                        console.error('TTS error:', e);
+                        resolve();
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                });
+            } catch (err) {
+                console.error('TTS failed:', err);
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, role) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}-message`;
+            msgDiv.textContent = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Show/hide error
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('show');
+        }
+        function hideError() {
+            errorMsg.classList.remove('show');
+        }
+
+        console.log('Ready! Click the microphone!');
+    </script>
+</body>
+</html>

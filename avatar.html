@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roboboy Avatar</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #F0FFFE;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .avatar-container {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(20, 184, 166, 0.4);
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        /* White ring */
+        .avatar-ring {
+            width: 100px;
+            height: 100px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Inner teal face */
+        .avatar-face {
+            width: 70px;
+            height: 70px;
+            background: #14B8A6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+        
+        /* Eyes */
+        .eye {
+            width: 24px;
+            height: 24px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: blink 4s infinite;
+        }
+        
+        .pupil {
+            width: 12px;
+            height: 12px;
+            background: #14B8A6;
+            border-radius: 50%;
+        }
+        
+        @keyframes blink {
+            0%, 96%, 100% { transform: scaleY(1); }
+            98% { transform: scaleY(0.1); }
+        }
+        
+        /* Mouth */
+        .mouth {
+            position: absolute;
+            bottom: 15px;
+            width: 16px;
+            height: 20px;
+            background: #FFFFFF;
+            border-radius: 50%;
+        }
+        
+        .title {
+            color: #111827;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #6B7280;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Roboboy</h1>
+    <p class="subtitle">Your AI Friend</p>
+    
+    <div class="avatar-container">
+        <div class="avatar-ring">
+            <div class="avatar-face">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

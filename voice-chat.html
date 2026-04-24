@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to Roboboy 🇸🇬</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .mic-button {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #007AFF 0%, #0055CC 100%);
+            border: none;
+            font-size: 80px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 122, 255, 0.5);
+        }
+
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+
+        .mic-button.recording {
+            background: linear-gradient(135deg, #FF3B30 0%, #CC2F27 100%);
+            box-shadow: 0 10px 30px rgba(255, 59, 48, 0.4);
+            animation: pulse 1s infinite;
+        }
+
+        .mic-button.processing {
+            background: linear-gradient(135deg, #FF9500 0%, #CC7700 100%);
+            box-shadow: 0 10px 30px rgba(255, 149, 0, 0.4);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(255, 59, 48, 0.4);
+            }
+            50% { 
+                transform: scale(1.08);
+                box-shadow: 0 15px 40px rgba(255, 59, 48, 0.6);
+            }
+        }
+
+        .status {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            min-height: 27px;
+            font-weight: 500;
+        }
+
+        .transcript {
+            background: #f5f5f7;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            text-align: left;
+            display: none;
+        }
+
+        .transcript.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .transcript-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .transcript-text {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .response {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            min-height: 60px;
+            text-align: left;
+            display: none;
+            color: white;
+        }
+
+        .response.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .response-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .response-text {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .audio-player.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error {
+            color: #FF3B30;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+            padding: 10px;
+            background: #FFF5F5;
+            border-radius: 8px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .instructions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .flag {
+            font-size: 24px;
+            margin-left: 5px;
+        }
+
+        .browser-warning {
+            background: #FFF3CD;
+            border: 2px solid #FFC107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .browser-warning.show {
+            display: block;
+        }
+
+        .browser-warning strong {
+            color: #856404;
+        }
+
+        .browser-warning p {
+            color: #856404;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+
+        .force-enable-btn {
+            background: #28A745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .force-enable-btn.show {
+            display: inline-block;
+        }
+
+        .force-enable-btn:hover {
+            background: #218838;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .mic-button {
+                width: 150px;
+                height: 150px;
+                font-size: 60px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Talk to Roboboy <span class="flag">🇸</span></h1>
+        <p class="subtitle">Your Singaporean Digital Friend</p>
+
+        <div class="browser-warning" id="browserWarning">
+            <strong>⚠️ Microphone Access Issue</strong>
+            <p id="warningText"></p>
+            <button class="force-enable-btn" id="forceEnableBtn">Try Anyway</button>
+        </div>
+
+        <button class="mic-button" id="micBtn">
+            🎤
+        </button>
+
+        <p class="status" id="status">Click microphone to speak</p>
+
+        <div class="transcript" id="transcriptBox">
+            <div class="transcript-label">You said:</div>
+            <div class="transcript-text" id="transcriptText"></div>
+        </div>
+
+        <div class="response" id="responseBox">
+            <div class="response-label">Roboboy replies:</div>
+            <div class="response-text" id="responseText"></div>
+            <audio class="audio-player" id="audioPlayer" controls></audio>
+        </div>
+
+        <p class="error" id="errorMsg"></p>
+
+        <div class="instructions">
+            <strong>How to use:</strong><br>
+            1. Click the microphone button to start recording<br>
+            2. Speak your message<br>
+            3. Click again to stop and send<br>
+            4. Wait for Roboboy's reply!<br><br>
+            <em>Works best on Chrome, Safari, or Edge</em>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Updated for remote access
+        const SERVER_IP = '159.223.95.178'; // Your server IP
+        const OPENCLAW_GATEWAY = `http://${SERVER_IP}:18789`; // Gateway URL
+        const WEB_SERVER_PORT = 8080; // Web UI port
+        const TELEGRAM_CHAT_ID = 'telegram:407245720'; // Your Telegram chat ID
+
+        // Elements
+        const micBtn = document.getElementById('micBtn');
+        const status = document.getElementById('status');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const transcriptText = document.getElementById('transcriptText');
+        const responseBox = document.getElementById('responseBox');
+        const responseText = document.getElementById('responseText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const errorMsg = document.getElementById('errorMsg');
+        const browserWarning = document.getElementById('browserWarning');
+        const warningText = document.getElementById('warningText');
+        const forceEnableBtn = document.getElementById('forceEnableBtn');
+
+        // State
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isProcessing = false;
+        let forceEnabled = false; // Allow force enable
+
+        // Debug: Log browser info
+        console.log('Browser:', navigator.userAgent);
+        console.log('Protocol:', window.location.protocol);
+        console.log('MediaDevices:', !!navigator.mediaDevices);
+        console.log('getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+
+        // Check browser support and show appropriate warnings
+        function checkBrowserSupport() {
+            const isHTTPS = window.location.protocol === 'https:';
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            const isAndroid = navigator.userAgent.indexOf('Android') !== -1;
+            const isChrome = navigator.userAgent.indexOf('Chrome') !== -1;
+
+            console.log('Browser checks:', {
+                isHTTPS,
+                isLocalhost,
+                hasMediaDevices,
+                isAndroid,
+                isChrome
+            });
+
+            // Android Chrome should work even on HTTP
+            if (isAndroid && isChrome) {
+                console.log('Android Chrome detected - should work!');
+                if (!hasMediaDevices) {
+                    showBrowserWarning('Your Chrome browser does not support audio recording. Please update Chrome to the latest version.');
+                    micBtn.disabled = true;
+                    micBtn.style.opacity = '0.5';
+                    micBtn.style.cursor = 'not-allowed';
+                    return false;
+                }
+                // Android Chrome - let them try!
+                return true;
+            }
+
+            if (!hasMediaDevices) {
+                showBrowserWarning('Your browser does not support audio recording. Please use Chrome, Safari, or Edge on a modern device.');
+                micBtn.disabled = true;
+                micBtn.style.opacity = '0.5';
+                micBtn.style.cursor = 'not-allowed';
+                return false;
+            }
+
+            if (!isHTTPS && !isLocalhost) {
+                // HTTP (not localhost) - may have issues on some browsers
+                if (navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('iPad') !== -1) {
+                    showBrowserWarning('iOS Safari requires HTTPS for microphone access. Please use Chrome on Android, or set up HTTPS for this server.');
+                    // Still allow them to try
+                    return true;
+                } else {
+                    showBrowserWarning('Microphone access may be blocked on HTTP. Please use Chrome on Android or try accessing via HTTPS.');
+                    return true; // Let them try anyway
+                }
+            }
+
+            return true;
+        }
+
+        // Show browser warning
+        function showBrowserWarning(message) {
+            warningText.textContent = message;
+            browserWarning.classList.add('show');
+            
+            // Show force enable button for Android Chrome
+            const isAndroid = navigator.userAgent.indexOf('Android') !== -1;
+            const isChrome = navigator.userAgent.indexOf('Chrome') !== -1;
+            if (isAndroid && isChrome) {
+                forceEnableBtn.classList.add('show');
+            }
+        }
+
+        // Hide browser warning
+        function hideBrowserWarning() {
+            browserWarning.classList.remove('show');
+            forceEnableBtn.classList.remove('show');
+        }
+
+        // Force enable button click handler
+        forceEnableBtn.addEventListener('click', () => {
+            console.log('Force enabled by user!');
+            forceEnabled = true;
+            hideBrowserWarning();
+            micBtn.disabled = false;
+            micBtn.style.opacity = '1';
+            micBtn.style.cursor = 'pointer';
+            status.textContent = 'Click microphone to speak';
+        });
+
+        // Initialize
+        const browserSupported = checkBrowserSupport();
+        if (browserSupported) {
+            console.log('Browser appears to support audio recording');
+        }
+
+        // Microphone button click handler
+        micBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            if (!browserSupported && !forceEnabled) {
+                showError('Your browser does not support audio recording. Please use Chrome, Safari, or Edge.');
+                return;
+            }
+
+            if (isProcessing) {
+                console.log('Already processing, ignoring click');
+                return;
+            }
+
+            if (isRecording) {
+                // Stop recording
+                console.log('Stopping recording...');
+                stopRecording();
+            } else {
+                // Start recording
+                console.log('Starting recording...');
+                await startRecording();
+            }
+        });
+
+        // Start recording
+        async function startRecording() {
+            try {
+                console.log('Requesting microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 16000
+                    } 
+                });
+                console.log('Microphone access granted!');
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                        ? 'audio/webm;codecs=opus' 
+                        : 'audio/ogg;codecs=opus'
+                });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    console.log('Data available:', event.data.size);
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    console.log('Recording stopped, processing...');
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    console.log('Audio blob created:', audioBlob.size, 'bytes');
+                    await sendAudio(audioBlob);
+                };
+
+                mediaRecorder.start(1000); // Collect data every second
+                isRecording = true;
+                
+                // Update UI
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '⏹️';
+                status.textContent = 'Recording... Click to stop';
+                hideError();
+                hideResponse();
+                hideBrowserWarning();
+
+                // Stop all tracks when done
+                stream.getTracks().forEach(track => {
+                    track.onended = () => {
+                        console.log('Track ended');
+                        if (isRecording) {
+                            stopRecording();
+                        }
+                    };
+                });
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                console.error('Error name:', err.name);
+                console.error('Error message:', err.message);
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showError('Microphone permission denied. Please allow microphone access in your browser settings.');
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    showError('No microphone found. Please connect a microphone and try again.');
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    showError('Microphone is being used by another application. Please close other apps and try again.');
+                } else {
+                    showError('Could not access microphone: ' + err.message + '. Please use Chrome, Safari, or Edge.');
+                }
+                
+                status.textContent = 'Click microphone to speak';
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                
+                // Stop all tracks
+                if (mediaRecorder.stream) {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+            }
+
+            isRecording = false;
+            
+            // Update UI
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '🎤';
+            status.textContent = 'Processing...';
+            isProcessing = true;
+            micBtn.classList.add('processing');
+        }
+
+        // Send audio to OpenClaw
+        async function sendAudio(audioBlob) {
+            try {
+                console.log('Sending audio to OpenClaw...');
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'voice.ogg');
+                formData.append('chatId', TELEGRAM_CHAT_ID);
+
+                // Upload audio file to OpenClaw
+                const uploadResponse = await fetch(`${OPENCLAW_GATEWAY}/api/media/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Upload response status:', uploadResponse.status);
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    console.error('Upload failed:', errorText);
+                    throw new Error('Upload failed: ' + uploadResponse.status);
+                }
+
+                const uploadData = await uploadResponse.json();
+                console.log('Upload response:', uploadData);
+                const mediaPath = uploadData.path || uploadData.mediaPath;
+
+                if (!mediaPath) {
+                    throw new Error('No media path returned');
+                }
+
+                console.log('Audio uploaded:', mediaPath);
+
+                // Send message with audio to OpenClaw via Telegram
+                const messageResponse = await fetch(`${OPENCLAW_GATEWAY}/api/message/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        channel: 'telegram',
+                        target: TELEGRAM_CHAT_ID,
+                        message: '[Voice message]',
+                        media: mediaPath
+                    })
+                });
+
+                console.log('Message response status:', messageResponse.status);
+
+                if (!messageResponse.ok) {
+                    const errorText = await messageResponse.text();
+                    console.error('Message send failed:', errorText);
+                    throw new Error('Message send failed: ' + messageResponse.status);
+                }
+
+                const messageData = await messageResponse.json();
+                console.log('Message sent:', messageData);
+                
+                // Wait for reply (poll for response)
+                status.textContent = 'Waiting for Roboboy\'s reply...';
+                await pollForReply();
+
+            } catch (err) {
+                console.error('Error sending audio:', err);
+                showError('Failed to send audio: ' + err.message + '. Please try again.');
+                status.textContent = 'Click microphone to speak';
+                isProcessing = false;
+                micBtn.classList.remove('processing');
+            }
+        }
+
+        // Poll for reply
+        async function pollForReply() {
+            let attempts = 0;
+            const maxAttempts = 30; // 30 seconds timeout
+
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                console.log('Polling for reply... attempt', attempts);
+
+                try {
+                    // Fetch recent messages from session
+                    const response = await fetch(`${OPENCLAW_GATEWAY}/api/sessions/history?limit=5`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Session history:', data);
+                        
+                        // Check if there's a new reply with TTS
+                        if (data.messages && data.messages.length > 0) {
+                            // Get last assistant message
+                            const assistantMessages = data.messages.filter(m => m.from === 'assistant' || m.role === 'assistant');
+                            
+                            if (assistantMessages.length > 0) {
+                                const lastMessage = assistantMessages[assistantMessages.length - 1];
+                                console.log('Found assistant message:', lastMessage);
+                                
+                                if (lastMessage.media || lastMessage.text) {
+                                    // Found reply!
+                                    clearInterval(pollInterval);
+                                    console.log('Displaying reply...');
+                                    displayReply(lastMessage);
+                                    status.textContent = 'Click microphone to speak';
+                                    isProcessing = false;
+                                    micBtn.classList.remove('processing');
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error polling:', err);
+                }
+
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    showError('No reply received within 30 seconds. Please try again.');
+                    status.textContent = 'Click microphone to speak';
+                    isProcessing = false;
+                    micBtn.classList.remove('processing');
+                }
+            }, 1000); // Poll every second
+        }
+
+        // Display reply
+        function displayReply(message) {
+            console.log('Displaying reply:', message);
+            
+            // Show transcript if available
+            if (message.transcript) {
+                transcriptText.textContent = message.transcript;
+                transcriptBox.classList.add('show');
+            }
+
+            // Show response text
+            if (message.text) {
+                responseText.textContent = message.text;
+                responseBox.classList.add('show');
+            }
+
+            // Play TTS audio if available
+            if (message.media) {
+                console.log('Playing TTS audio:', message.media);
+                audioPlayer.src = message.media;
+                audioPlayer.classList.add('show');
+                audioPlayer.play().then(() => {
+                    console.log('Audio playing');
+                }).catch(err => {
+                    console.error('Error playing audio:', err);
+                    showError('Audio received but could not play automatically. Click the play button.');
+                });
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            console.error('Showing error:', message);
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+        }
+
+        // Hide error
+        function hideError() {
+            errorMsg.classList.remove('show');
+        }
+
+        // Hide response
+        function hideResponse() {
+            responseBox.classList.remove('show');
+            transcriptBox.classList.remove('show');
+            audioPlayer.classList.remove('show');
+        }
+
+        // Initialize
+        console.log('🇸🇬 Roboboy Voice Chat initialized');
+        console.log('Gateway:', OPENCLAW_GATEWAY);
+        console.log('Chat ID:', TELEGRAM_CHAT_ID);
+        console.log('Protocol:', window.location.protocol);
+        console.log('Host:', window.location.host);
+    </script>
+</body>
+</html>
