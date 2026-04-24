@@ -726,6 +726,20 @@
         const SERVER_URL = window.location.origin;
         let TTS_VOICE = 'indian-male';
         
+        // Audio context for playback
+        let audioContext = null;
+        let audioEnabled = false;
+        
+        // Enable audio on first user interaction
+        document.addEventListener('click', function enableAudio() {
+            if (!audioEnabled) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioContext.resume();
+                audioEnabled = true;
+                console.log('✓ Audio enabled by user gesture');
+            }
+        }, { once: false });
+        
         // State
         let isRecording = false;
         let mediaRecorder = null;
@@ -782,6 +796,12 @@
         function startChat() {
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('chatScreen').classList.add('active');
+            
+            // Enable audio playback on user gesture
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            audioContext.resume();
+            
+            console.log('✓ Audio context enabled');
         }
 
         // Toggle recording
@@ -966,7 +986,7 @@
             switch(lang) {
                 case 'zh': return 'chinese-male';
                 case 'ms': return 'singapore-male';
-                case 'ta': return 'singapore-male';
+                case 'ta': return 'tamil-male';
                 default: return TTS_VOICE; // Use default voice
             }
         }
@@ -981,7 +1001,7 @@
                 console.log('TTS request:', text.substring(0, 50) + '...', 'lang:', detectedLang, 'voice:', voice);
                 
                 // Add cache-busting parameter
-                const cacheBust = `&_t=${Date.now()}`;
+                const cacheBust = `?_t=${Date.now()}`;
                 
                 const response = await fetch(`${SERVER_URL}/tts/json${cacheBust}`, {
                     method: 'POST',
@@ -1009,7 +1029,23 @@
                 const audioUrl = `data:audio/mp3;base64,${data.audio}`;
                 
                 const audio = new Audio(audioUrl);
-                audio.play();
+                
+                // Ensure audio context is active
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Handle autoplay policy
+                audio.play().then(() => {
+                    console.log('✓ Audio playing');
+                }).catch(err => {
+                    console.error('✗ Autoplay blocked, waiting for user gesture...');
+                    // Play on next click
+                    document.addEventListener('click', function playAudio() {
+                        audio.play().then(() => console.log('✓ Audio playing after gesture'));
+                        document.removeEventListener('click', playAudio);
+                    }, { once: true });
+                });
                 
                 audio.onended = () => {
                     console.log('TTS playback complete');

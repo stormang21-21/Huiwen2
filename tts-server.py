@@ -25,6 +25,7 @@ VOICES = {
     'australia': 'en-AU-NatashaNeural',
     # Indian
     'india-male': 'en-IN-PrabhatNeural',
+    'indian-male': 'en-IN-PrabhatNeural',
     # Philippine
     'philippines-male': 'en-PH-JamesNeural',
     # UK

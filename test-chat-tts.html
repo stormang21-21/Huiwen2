@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat TTS Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        button { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; }
+        .status { margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .log { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto; }
+        input { padding: 10px; width: 100%; margin: 10px 0; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>💬 Chat TTS Test</h1>
+    <p>This mimics exactly what happens in the chat</p>
+    
+    <input type="text" id="textInput" value="Hello, how are you?" placeholder="Type something...">
+    <button onclick="sendTextMessage()">Send & Speak</button>
+    
+    <div class="status" id="status">Ready</div>
+    <div class="log" id="log"></div>
+    
+    <script>
+        const logDiv = document.getElementById('log');
+        const status = document.getElementById('status');
+        let audioContext = null;
+        
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+        
+        // Enable audio on first click (like in chat)
+        document.addEventListener('click', function enableAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioContext.resume();
+                log('✓ Audio context enabled by user gesture');
+            }
+        }, { once: false });
+        
+        async function sendTextMessage() {
+            const textInput = document.getElementById('textInput');
+            const userText = textInput.value.trim();
+            
+            if (!userText) return;
+            
+            log('=== Sending message ===');
+            log('User text: ' + userText);
+            status.textContent = 'Processing...';
+            status.className = 'status';
+            
+            try {
+                // Get AI response (simulated)
+                log('Getting AI response...');
+                const aiResponse = await getAIResponse(userText);
+                log('AI response: ' + aiResponse);
+                
+                // Speak response (exactly like in chat)
+                log('Calling speakText...');
+                await speakText(aiResponse);
+                log('speakText completed');
+                
+                status.textContent = '✓ Done!';
+                status.className = 'status success';
+                
+            } catch (err) {
+                log('✗ Error: ' + err.message);
+                log(err.stack);
+                status.textContent = '✗ Error: ' + err.message;
+                status.className = 'status error';
+            }
+        }
+        
+        // Simulated AI response
+        async function getAIResponse(userText) {
+            // In real chat this calls OpenAI API
+            // For testing, just return a fixed response
+            await new Promise(r => setTimeout(r, 500)); // Simulate delay
+            return "Halo! I am doing well, thank you for asking! How about you?";
+        }
+        
+        // Exact speakText from chat
+        async function speakText(text) {
+            try {
+                log('speakText called with: ' + text.substring(0, 50) + '...');
+                
+                // Detect language
+                const detectedLang = detectLanguage(text);
+                const voice = getVoiceForLanguage(detectedLang);
+                log('Language: ' + detectedLang + ', Voice: ' + voice);
+                
+                // Add cache-busting parameter
+                const cacheBust = `&_t=${Date.now()}`;
+                
+                log('Fetching TTS...');
+                const startTime = Date.now();
+                
+                const response = await fetch(`/tts/json${cacheBust}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: voice
+                    })
+                });
+                
+                const fetchTime = Date.now() - startTime;
+                log(`TTS response: ${response.status} (${fetchTime}ms)`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log('Error response: ' + errorText);
+                    throw new Error('TTS failed: ' + response.status);
+                }
+                
+                const data = await response.json();
+                log(`Audio received: ${data.audio ? data.audio.length : 0} bytes`);
+                
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                log('Creating Audio object...');
+                
+                const audio = new Audio(audioUrl);
+                
+                // Setup event handlers
+                audio.oncanplay = () => log('✓ oncanplay');
+                audio.onloadeddata = () => log('✓ onloadeddata');
+                audio.onplay = () => log('▶️ onplay');
+                audio.onplaying = () => log('▶️ onplaying');
+                audio.onended = () => log('⏹️ onended - Complete!');
+                audio.onerror = (err) => log('✗ onerror: ' + JSON.stringify(err));
+                
+                // Ensure audio context is active
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    log('Created new AudioContext');
+                }
+                
+                log('Calling audio.play()...');
+                
+                // Handle autoplay policy
+                audio.play().then(() => {
+                    log('✓ audio.play() succeeded');
+                }).catch(err => {
+                    log('✗ audio.play() failed: ' + err.message);
+                    log('Waiting for user gesture...');
+                    document.addEventListener('click', function playAudio() {
+                        audio.play().then(() => log('✓ Playing after gesture'));
+                        document.removeEventListener('click', playAudio);
+                    }, { once: true });
+                });
+                
+                log('speakText finished (audio may still be playing)');
+                
+            } catch (err) {
+                log('✗ speakText error: ' + err.message);
+                throw err;
+            }
+        }
+        
+        // Language detection (from chat)
+        function detectLanguage(text) {
+            if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
+            if (/[\u0b80-\u0bff]/.test(text)) return 'ta';
+            if (/\b(apa|khabar|kabar|selamat|pagi|petang|malam|terima|kasih|sama|ada|dan|yang|untuk|dengan|ini|itu|saya|anda|dia|tidak|adalah|akan|dari|pada|atau|dalam|ke|di|sudah|belum|boleh|harus)\b/i.test(text)) return 'ms';
+            return 'en';
+        }
+        
+        // Voice selection (from chat)
+        function getVoiceForLanguage(lang) {
+            switch(lang) {
+                case 'zh': return 'chinese-male';
+                case 'ms': return 'singapore-male';
+                case 'ta': return 'singapore-male';
+                default: return 'indian-male';
+            }
+        }
+        
+        log('Page loaded. Click "Send & Speak" to test.');
+    </script>
+</body>
+</html>

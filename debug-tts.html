@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TTS Debug</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; }
+        .status { margin: 20px 0; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .log { background: #000; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+        .step { margin: 10px 0; padding: 10px; border-left: 3px solid #ccc; }
+        .step.done { border-left-color: #28a745; background: #d4edda; }
+        .step.error { border-left-color: #dc3545; background: #f8d7da; }
+        .step.pending { border-left-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🔊 TTS Full Debug</h1>
+    <p>This will test every step of the TTS process</p>
+    
+    <button onclick="runFullTest()">▶️ Run Full Test</button>
+    <button onclick="clearLog()">🗑️ Clear Log</button>
+    
+    <h3>Steps:</h3>
+    <div id="steps"></div>
+    
+    <h3>Detailed Log:</h3>
+    <div class="log" id="log"></div>
+    
+    <script>
+        const logDiv = document.getElementById('log');
+        const stepsDiv = document.getElementById('steps');
+        
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+        
+        function addStep(text) {
+            const step = document.createElement('div');
+            step.className = 'step pending';
+            step.id = `step-${stepsDiv.children.length}`;
+            step.textContent = '⏳ ' + text;
+            stepsDiv.appendChild(step);
+            return step;
+        }
+        
+        function updateStep(step, status, text) {
+            step.className = 'step ' + status;
+            step.textContent = (status === 'done' ? '✓ ' : status === 'error' ? '✗ ' : '⏳ ') + text;
+        }
+        
+        function clearLog() {
+            logDiv.innerHTML = '';
+            stepsDiv.innerHTML = '';
+        }
+        
+        async function runFullTest() {
+            clearLog();
+            log('=== Starting TTS Full Test ===\n');
+            
+            try {
+                // Step 1: Check AudioContext
+                const step1 = addStep('Creating AudioContext...');
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                log('AudioContext created: ' + audioContext.state);
+                updateStep(step1, 'done', 'AudioContext created (' + audioContext.state + ')');
+                
+                // Step 2: Fetch TTS
+                const step2 = addStep('Fetching TTS from server...');
+                log('POST /tts/json');
+                const startTime = Date.now();
+                
+                const response = await fetch('/tts/json', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({ 
+                        text: 'Hello, I am Roboboy', 
+                        voice: 'indian-male' 
+                    })
+                });
+                
+                const fetchTime = Date.now() - startTime;
+                log(`Response: ${response.status} (${fetchTime}ms)`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Error response: ${errorText}`);
+                    updateStep(step2, 'error', `HTTP ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                updateStep(step2, 'done', `TTS fetched (${fetchTime}ms)`);
+                
+                // Step 3: Parse response
+                const step3 = addStep('Parsing JSON response...');
+                const data = await response.json();
+                log(`Audio size: ${data.audio ? data.audio.length : 0} bytes`);
+                log(`Format: ${data.format || 'unknown'}`);
+                log(`Voice: ${data.voice || 'unknown'}`);
+                updateStep(step3, 'done', `Parsed (${data.audio.length} bytes)`);
+                
+                // Step 4: Create audio
+                const step4 = addStep('Creating Audio object...');
+                const audioUrl = `data:audio/mp3;base64,${data.audio}`;
+                const audio = new Audio(audioUrl);
+                log('Audio object created');
+                log('Audio URL length: ' + audioUrl.length);
+                updateStep(step4, 'done', 'Audio object created');
+                
+                // Step 5: Setup event handlers
+                const step5 = addStep('Setting up event handlers...');
+                
+                audio.oncanplay = () => {
+                    log('✓ oncanplay fired');
+                };
+                
+                audio.onloadeddata = () => {
+                    log('✓ onloadeddata fired');
+                };
+                
+                audio.onplay = () => {
+                    log('▶️ onplay fired');
+                };
+                
+                audio.onplaying = () => {
+                    log('▶️ onplaying fired');
+                };
+                
+                audio.onended = () => {
+                    log('⏹️ onended fired - Playback complete!');
+                    updateStep(step6, 'done', 'Playback complete!');
+                };
+                
+                audio.onerror = (err) => {
+                    log('✗ onerror fired: ' + JSON.stringify(err));
+                    updateStep(step6, 'error', 'Playback error');
+                };
+                
+                updateStep(step5, 'done', 'Event handlers setup');
+                
+                // Step 6: Play audio
+                const step6 = addStep('Playing audio...');
+                log('Calling audio.play()...');
+                const playStart = Date.now();
+                
+                await audio.play();
+                
+                const playTime = Date.now() - playStart;
+                log(`audio.play() returned (${playTime}ms)`);
+                log('Audio state: ' + audioContext.state);
+                
+                // Wait for playback to complete
+                await new Promise(resolve => {
+                    audio.onended = resolve;
+                    audio.onerror = resolve;
+                    setTimeout(resolve, 10000); // Timeout after 10s
+                });
+                
+                log('=== Test Complete ===');
+                
+            } catch (err) {
+                log(`✗ Test failed: ${err.message}`);
+                log(err.stack);
+                const lastStep = stepsDiv.lastElementChild;
+                if (lastStep) updateStep(lastStep, 'error', err.message);
+            }
+        }
+        
+        log('Page loaded. Click "Run Full Test" to begin.');
+    </script>
+</body>
+</html>

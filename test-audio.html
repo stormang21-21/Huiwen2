@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        button { padding: 20px 40px; font-size: 20px; margin: 10px; cursor: pointer; }
+        .status { margin: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔊 Audio Playback Test</h1>
+    <p>Click the button to test audio playback</p>
+    <button onclick="testAudio()">Play Test Audio</button>
+    <div class="status" id="status">Click button to test</div>
+    
+    <script>
+        async function testAudio() {
+            const status = document.getElementById('status');
+            status.textContent = 'Testing...';
+            
+            try {
+                // Get TTS audio
+                const response = await fetch('/tts/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: 'Hello', voice: 'indian-male' })
+                });
+                
+                const data = await response.json();
+                status.textContent = `Audio received: ${data.audio.length} bytes`;
+                
+                // Create audio element
+                const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+                
+                audio.onplay = () => { status.textContent = '▶️ Playing...'; };
+                audio.onended = () => { status.textContent = '✓ Playback complete!'; };
+                audio.onerror = (e) => { status.textContent = '✗ Error: ' + JSON.stringify(e); };
+                
+                await audio.play();
+                status.textContent = '✓ Started playing!';
+                
+            } catch (err) {
+                status.textContent = '✗ Error: ' + err.message;
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
