@@ -737,6 +737,12 @@
                 audioContext.resume();
                 audioEnabled = true;
                 console.log('✓ Audio enabled by user gesture');
+                // Update status indicator
+                const status = document.getElementById('audioStatus');
+                if (status) {
+                    status.textContent = '✓ Audio enabled';
+                    status.style.color = '#28a745';
+                }
             }
         }, { once: false });
         
